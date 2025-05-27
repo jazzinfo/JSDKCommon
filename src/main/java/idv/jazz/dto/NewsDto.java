@@ -18,6 +18,5 @@ public class NewsDto {
      private String banming;
      private String jhuanlan;
      private String locale;
-     private String images;
-     
+     private String images;     
 }
