@@ -3,8 +3,11 @@ package idv.jazz;
 import java.io.*;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.List;
 
 import idv.jazz.dto.NewsDto;
+import idv.jazz.utility.NewsParser;
 
 public class ReadArticleWithEncodingDetect {
 
@@ -37,41 +40,40 @@ public class ReadArticleWithEncodingDetect {
 
         System.out.println("偵測到編碼: " + detectedCharset.displayName());
 
+        List<NewsDto> newsDtoList = new ArrayList<>();
         try (RandomAccessFile raf = new RandomAccessFile(file, "r")) {
             raf.seek(startOffset); //依上面編碼將讀檔位置往後調整
 
-            String line;
-            StringBuilder article = null;
-            NewsDto newsDto = null;
+            String line;           
+            List<String> linesList = null;
             while ((line = customReadLine(raf, detectedCharset)) != null) {
             	
-            	// recordBoxed(line, article) ;
                 if (line.startsWith(START_MARK)) {
-                    article = new StringBuilder();
-                    article.append(line).append("\n");
+                  	linesList = new ArrayList<>();                	
+                    	linesList.add(line);
                 } else if (line.equals(END_MARK)) {
-                    if (article != null) {
-                        article.append(line).append("\n");
-                      //  System.out.println("【讀取一篇文章】\n" + article);
-                      //  System.out.println("＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝");
-                        recordShow(article);
-                        article = null;
+                    if (linesList != null) {
+                      	linesList.add(line);
+                      	NewsDto dto = NewsParser.parseLinesToDto(linesList);
+                      	newsDtoList.add(dto);
+                        linesList = null;
                     }
-                } else if (article != null) {
-                    article.append(line).append("\n");
+                } else if (linesList != null) {
+                   	linesList.add(line);
                 }
                 
             }
         }
+        
+        for(NewsDto item : newsDtoList) {
+          	System.out.println( item.getTitle() );
+          	System.out.println( item.getAuthor() );
+          	System.out.println( item.getBaokan() );
+          	System.out.println( item.getDate() );
+          	System.out.println( item.getImages() );
+         	System.out.println("＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝");
+        }
     }
-
-    private static void recordShow( StringBuilder article) throws IOException {
-
-          System.out.println( article);
-          System.out.println("＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝");
-
-    }
-    
     
     private static Charset detectUtf8OrBig5(File file) throws IOException {
         try (BufferedInputStream bis = new BufferedInputStream(new FileInputStream(file))) {
