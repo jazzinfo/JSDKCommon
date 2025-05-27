@@ -15,122 +15,133 @@ public class ReadArticleWithEncodingDetect {
     private static final String END_MARK = "-----------------------------------------";
     private static final Charset BIG5 = Charset.forName("Big5");
 
-    public static void main(String[] args) throws IOException {
+    public static void main(String[] args) {
         File file = new File("C:\\TEMP\\199601.txt");
 
-        Charset detectedCharset;
-        long startOffset = 0;
+        try {
+            Charset charset = detectCharset(file);
+            System.out.println("偵測到編碼: " + charset.displayName());
 
-        try (RandomAccessFile raf = new RandomAccessFile(file, "r")) {
-            // BOM 判斷
-            byte[] first3 = new byte[3];
-            raf.read(first3);
-            if ((first3[0] & 0xFF) == 0xEF && (first3[1] & 0xFF) == 0xBB && (first3[2] & 0xFF) == 0xBF) {
-                detectedCharset = StandardCharsets.UTF_8;
-                startOffset = 3;
-            } else if ((first3[0] & 0xFF) == 0xFF && (first3[1] & 0xFF) == 0xFE) {
-                detectedCharset = StandardCharsets.UTF_16LE;
-                startOffset = 2;
-            } else {
-                // 嘗試用 UTF-8 讀取部分內容，偵測是否為 BIG5
-                detectedCharset = detectUtf8OrBig5(file);
-                startOffset = 0;
-            }
-        }
+            List<NewsDto> newsList = parseNewsFromFile(file, charset);
+            printNews(newsList);
 
-        System.out.println("偵測到編碼: " + detectedCharset.displayName());
-
-        List<NewsDto> newsDtoList = new ArrayList<>();
-        try (RandomAccessFile raf = new RandomAccessFile(file, "r")) {
-            raf.seek(startOffset); //依上面編碼將讀檔位置往後調整
-
-            String line;           
-            List<String> linesList = null;
-            while ((line = customReadLine(raf, detectedCharset)) != null) {
-            	
-                if (line.startsWith(START_MARK)) {
-                  	linesList = new ArrayList<>();                	
-                    	linesList.add(line);
-                } else if (line.equals(END_MARK)) {
-                    if (linesList != null) {
-                      	linesList.add(line);
-                      	NewsDto dto = NewsParser.parseLinesToDto(linesList);
-                      	newsDtoList.add(dto);
-                        linesList = null;
-                    }
-                } else if (linesList != null) {
-                   	linesList.add(line);
-                }
-                
-            }
-        }
-        
-        for(NewsDto item : newsDtoList) {
-          	System.out.println( item.getTitle() );
-          	System.out.println( item.getAuthor() );
-          	System.out.println( item.getBaokan() );
-          	System.out.println( item.getDate() );
-          	System.out.println( item.getImages() );
-         	System.out.println("＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝");
+        } catch (IOException e) {
+            System.err.println("讀取檔案時發生錯誤: " + e.getMessage());
+            e.printStackTrace();
         }
     }
-    
+
+    private static Charset detectCharset(File file) throws IOException {
+        try (RandomAccessFile raf = new RandomAccessFile(file, "r")) {
+            byte[] bom = new byte[3];
+            raf.read(bom);
+
+            if (bom[0] == (byte) 0xEF && bom[1] == (byte) 0xBB && bom[2] == (byte) 0xBF) {
+                return StandardCharsets.UTF_8;
+            } else if (bom[0] == (byte) 0xFF && bom[1] == (byte) 0xFE) {
+                return StandardCharsets.UTF_16LE;
+            }
+        }
+
+        return detectUtf8OrBig5(file);
+    }
+
     private static Charset detectUtf8OrBig5(File file) throws IOException {
         try (BufferedInputStream bis = new BufferedInputStream(new FileInputStream(file))) {
             bis.mark(1000);
             byte[] sample = new byte[512];
             int len = bis.read(sample);
             bis.reset();
-            String s = new String(sample, 0, len, StandardCharsets.UTF_8);
-            if (s.contains("�") || !s.contains("標")) {
-                // 出現 � 字符或抓不到「標」 → 當作 BIG5
-                return BIG5;
-            } else {
-                return StandardCharsets.UTF_8;
-            }
+
+            String content = new String(sample, 0, len, StandardCharsets.UTF_8);
+            return (content.contains("�") || !content.contains("標")) ? BIG5 : StandardCharsets.UTF_8;
         }
     }
 
-    private static String customReadLine(RandomAccessFile raf, Charset charset) throws IOException {
+    private static List<NewsDto> parseNewsFromFile(File file, Charset charset) throws IOException {
+        List<NewsDto> newsList = new ArrayList<>();
+
+        try (RandomAccessFile raf = new RandomAccessFile(file, "r")) {
+            long offset = (charset.equals(StandardCharsets.UTF_8)) ? 3 :
+                          (charset.equals(StandardCharsets.UTF_16LE)) ? 2 : 0;
+            raf.seek(offset);
+
+            String line;
+            List<String> block = null;
+
+            while ((line = readLineWithCharset(raf, charset)) != null) {
+                if (line.startsWith(START_MARK)) {
+                    block = new ArrayList<>();
+                    block.add(line);
+                } else if (line.equals(END_MARK) && block != null) {
+                    block.add(line);
+                    newsList.add(NewsParser.parseLinesToDto(block));
+                    block = null;
+                } else if (block != null) {
+                    block.add(line);
+                }
+            }
+        }
+
+        return newsList;
+    }
+
+    private static String readLineWithCharset(RandomAccessFile raf, Charset charset) throws IOException {
         ByteArrayOutputStream buffer = new ByteArrayOutputStream();
 
         if (charset.equals(StandardCharsets.UTF_16LE)) {
             int b1, b2;
-            // UTF-16LE：每個字元兩個 byte -> 即每次讀取一個字
             while ((b1 = raf.read()) != -1 && (b2 = raf.read()) != -1) {
-                if (b1 == 0x0D && b2 == 0x00) { // '\r'
-                    long pos = raf.getFilePointer();
-                    int next1 = raf.read();
-                    int next2 = raf.read();
-                    if (!(next1 == 0x0A && next2 == 0x00)) { // 如果不是 '\n'
-                        raf.seek(pos);
-                    }
-                    break; //讀到斷行 /r 中斷
-                } else if (b1 == 0x0A && b2 == 0x00) { // '\n'
-                    break; //讀到斷行 /n 中斷
-                }
+                if (isLineBreakUtf16(b1, b2, raf)) break;
                 buffer.write(b1);
-                buffer.write(b2); // 一次寫入2 Bytes [即一個字]
+                buffer.write(b2);
             }
         } else {
-        	// BIG 5
             int b;
             while ((b = raf.read()) != -1) {
                 if (b == '\n') break;
                 if (b == '\r') {
                     long pos = raf.getFilePointer();
                     int next = raf.read();
-                    if (next != '\n' && next != -1) {
-                        raf.seek(pos);
-                    }
+                    if (next != '\n' && next != -1) raf.seek(pos);
                     break;
                 }
                 buffer.write(b);
             }
         }
 
-        if (buffer.size() == 0) return null;
-        return new String(buffer.toByteArray(), charset); //以編碼 utf-16le 轉為 Byte Array 
+        return (buffer.size() == 0) ? null : new String(buffer.toByteArray(), charset);
+    }
+
+    private static boolean isLineBreakUtf16(int b1, int b2, RandomAccessFile raf) throws IOException {
+        if ((b1 == 0x0D && b2 == 0x00) || (b1 == 0x0A && b2 == 0x00)) {
+            if (b1 == 0x0D) {
+                long pos = raf.getFilePointer();
+                int next1 = raf.read();
+                int next2 = raf.read();
+                if (!(next1 == 0x0A && next2 == 0x00)) {
+                    raf.seek(pos);
+                }
+            }
+            return true;
+        }
+        return false;
+    }
+
+    private static void printNews(List<NewsDto> newsList) {
+        for (NewsDto item : newsList) {
+            System.out.println(item.getTitle());
+            System.out.println(item.getAuthor());
+            System.out.println(item.getBaokan());
+            System.out.println(item.getDate());
+            System.out.println(item.getBanci() );
+            System.out.println(item.getBanming());
+            System.out.println(item.getJhuanlan());
+            System.out.println(item.getLocale());
+            System.out.println(item.getImages());
+            System.out.println("＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝");
+        }
     }
 }
+
 
