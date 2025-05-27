@@ -25,6 +25,7 @@ target/
 dist/
 .classpath
 .project
+.factorypath
 
 # JetBrains IDE
 .idea/

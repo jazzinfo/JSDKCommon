@@ -4,6 +4,8 @@ import java.io.*;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 
+import idv.jazz.dto.NewsDto;
+
 public class ReadArticleWithEncodingDetect {
 
     private static final String START_MARK = "標    題:";
@@ -40,7 +42,7 @@ public class ReadArticleWithEncodingDetect {
 
             String line;
             StringBuilder article = null;
-
+            NewsDto newsDto = null;
             while ((line = customReadLine(raf, detectedCharset)) != null) {
             	
             	// recordBoxed(line, article) ;
@@ -65,8 +67,8 @@ public class ReadArticleWithEncodingDetect {
 
     private static void recordShow( StringBuilder article) throws IOException {
 
-                 System.out.println( article);
-                 System.out.println("＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝");
+          System.out.println( article);
+          System.out.println("＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝");
 
     }
     

@@ -3,4 +3,32 @@
   <groupId>idv.jazz</groupId>
   <artifactId>JSDKCommon</artifactId>
   <version>0.0.1-SNAPSHOT</version>
+  
+  	<properties>
+		<java.version>17</java.version>
+	</properties>
+
+    <dependencies>
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <version>1.18.30</version> <!-- 請依實際需要調整版本 -->
+            <scope>provided</scope>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <!-- 編譯器設定 -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.11.0</version>
+                <configuration>
+                    <source>${java.version}</source>
+                    <target>${java.version}</target>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
 </project>
