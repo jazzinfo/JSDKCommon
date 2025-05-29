@@ -6,7 +6,8 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 
-import idv.jazz.dto.NewsDto;
+import idv.jazz.dto.News;
+import idv.jazz.service.NewsService;
 import idv.jazz.utility.NewsParser;
 
 public class ReadArticleWithEncodingDetect {
@@ -16,14 +17,17 @@ public class ReadArticleWithEncodingDetect {
     private static final Charset BIG5 = Charset.forName("Big5");
 
     public static void main(String[] args) {
+       	NewsService service = new NewsService();
         File file = new File("C:\\TEMP\\199601.txt");
 
         try {
             Charset charset = detectCharset(file);
             System.out.println("偵測到編碼: " + charset.displayName());
 
-            List<NewsDto> newsList = parseNewsFromFile(file, charset);
-            printNews(newsList);
+            List<News> newsList = parseNewsFromFile(file, charset);
+           // printNews(newsList);
+            service.insertBatch(newsList);
+            System.out.println("批量插入成功！");
 
         } catch (IOException e) {
             System.err.println("讀取檔案時發生錯誤: " + e.getMessage());
@@ -58,8 +62,8 @@ public class ReadArticleWithEncodingDetect {
         }
     }
 
-    private static List<NewsDto> parseNewsFromFile(File file, Charset charset) throws IOException {
-        List<NewsDto> newsList = new ArrayList<>();
+    private static List<News> parseNewsFromFile(File file, Charset charset) throws IOException {
+        List<News> newsList = new ArrayList<>();
 
         try (RandomAccessFile raf = new RandomAccessFile(file, "r")) {
             long offset = (charset.equals(StandardCharsets.UTF_8)) ? 3 :
@@ -128,20 +132,21 @@ public class ReadArticleWithEncodingDetect {
         return false;
     }
 
-    private static void printNews(List<NewsDto> newsList) {
-        for (NewsDto item : newsList) {
+    private static void printNews(List<News> newsList) {
+        for (News item : newsList) {
             System.out.println(item.getTitle());
             System.out.println(item.getAuthor());
             System.out.println(item.getBaokan());
-            System.out.println(item.getDate());
+            System.out.println(item.getPubdate());
             System.out.println(item.getBanci() );
             System.out.println(item.getBanming());
             System.out.println(item.getJhuanlan());
-            System.out.println(item.getLocale());
-            System.out.println(item.getImages());
+            System.out.println(item.getBaodaodi());
+            System.out.println(item.getFtimg());
             System.out.println("＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝");
         }
     }
+
 }
 
 
