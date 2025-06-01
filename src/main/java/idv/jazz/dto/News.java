@@ -1,7 +1,7 @@
 package idv.jazz.dto;
 
-import javax.validation.constraints.Size;
 
+import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
