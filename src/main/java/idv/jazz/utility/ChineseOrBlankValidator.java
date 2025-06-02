@@ -13,8 +13,8 @@ public class ChineseOrBlankValidator implements ConstraintValidator<ChineseOrBla
             return true;
         }
 
-        // 判斷是否為中文（含全形中文字）
-        return value.matches("^[\\u4e00-\\u9fa5]+$");
+        // 判斷是否為中文（含全形中文字）只要包含任意一個指定字元
+        return value.matches(".*[\\u4e00-\\u9fa5；;，：:].*");
     }
 }
 

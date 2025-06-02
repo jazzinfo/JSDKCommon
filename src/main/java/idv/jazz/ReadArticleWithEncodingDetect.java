@@ -3,12 +3,23 @@ package idv.jazz;
 import java.io.*;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+import org.hibernate.validator.messageinterpolation.ParameterMessageInterpolator;
 
 import idv.jazz.dto.News;
 import idv.jazz.service.NewsService;
 import idv.jazz.utility.NewsParser;
+import jakarta.validation.ConstraintViolation;
+import jakarta.validation.Validation;
+import jakarta.validation.Validator;
+import jakarta.validation.ValidatorFactory;
 
 public class ReadArticleWithEncodingDetect {
 
@@ -16,23 +27,79 @@ public class ReadArticleWithEncodingDetect {
     private static final String END_MARK = "-----------------------------------------";
     private static final Charset BIG5 = Charset.forName("Big5");
 
-    public static void main(String[] args) {
-       	NewsService service = new NewsService();
-        File file = new File("C:\\TEMP\\199601.txt");
+    public static void main(String[] args) { 
+     	List<Path> myFileList = getSrcFileList("C:\\MyDoc\\Rawdata\\");
+     	for(Path item : myFileList) {
+     		System.out.println( "讀取:" + item.toFile() );
+     		batchInsertJob(item.toFile());
+     		System.out.println( "=================================" );
+     	}
+    }
+    
+    private static List<Path> getSrcFileList(String srcPath){
+        Path directoryPath = Paths.get(srcPath);
 
+        try {
+            List<Path> filePaths = Files.walk(directoryPath)
+                .filter(Files::isRegularFile)
+                .collect(Collectors.toList());
+
+            for (Path filePath : filePaths) {
+                System.out.println(filePath.toAbsolutePath());
+            }
+            return filePaths;
+        } catch (IOException e) {
+            System.err.println("Error accessing directory: " + e.getMessage());
+            return null;
+        }
+    }
+    
+    private static void batchInsertJob(File file) {
+       	NewsService service = new NewsService();
         try {
             Charset charset = detectCharset(file);
             System.out.println("偵測到編碼: " + charset.displayName());
 
             List<News> newsList = parseNewsFromFile(file, charset);
-           // printNews(newsList);
-            service.insertBatch(newsList);
-            System.out.println("批量插入成功！");
+            boolean isValid = doValidData( newsList );
+            if( isValid ) {
+                // printNews(newsList);
+                 service.insertBatch(newsList);
+                 System.out.println("批量插入成功！");           	
+            }
 
         } catch (IOException e) {
             System.err.println("讀取檔案時發生錯誤: " + e.getMessage());
             e.printStackTrace();
         }
+    }    
+
+    
+    private static boolean doValidData(List<News> newsList) {
+        ValidatorFactory factory = Validation
+        	    .byDefaultProvider()
+        	    .configure()
+        	    .messageInterpolator(new ParameterMessageInterpolator())
+        	    .buildValidatorFactory();
+        	Validator validator = factory.getValidator();
+        	
+        // ✅ 加入驗證
+        for (News news : newsList) {
+            Set<ConstraintViolation<News>> violations = validator.validate(news);
+            if (!violations.isEmpty()) {
+                System.out.println("資料驗證失敗：");
+                for (ConstraintViolation<News> violation : violations) {
+                    System.out.println("欄位：" + violation.getPropertyPath() +
+                                       "，錯誤：" + violation.getMessage() +
+                                       "，值：" + violation.getInvalidValue());
+                    System.out.println( "Title:" + violation.getRootBean().getTitle() );
+                }
+                // 可以選擇：拋出例外、中止流程、或略過這筆
+               // throw new RuntimeException("資料驗證錯誤");
+                return false;
+            }
+        }  
+        return true;
     }
 
     private static Charset detectCharset(File file) throws IOException {
@@ -72,11 +139,18 @@ public class ReadArticleWithEncodingDetect {
 
             String line;
             List<String> block = null;
-
+            //int counter=0;
             while ((line = readLineWithCharset(raf, charset)) != null) {
                 if (line.startsWith(START_MARK)) {
                     block = new ArrayList<>();
                     block.add(line);
+                    /*
+                    ++counter;
+                    System.out.println( counter  + "\t" + line.length() + "\t" + line);
+                    if( line.length()>100 || line.length()==0) {
+                    	  break;
+                    }
+                    */
                 } else if (line.equals(END_MARK) && block != null) {
                     block.add(line);
                     newsList.add(NewsParser.parseLinesToDto(block));
