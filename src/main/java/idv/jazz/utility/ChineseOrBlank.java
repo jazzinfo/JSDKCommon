@@ -14,7 +14,7 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
 @Target({ FIELD })
 @Retention(RUNTIME)
 public @interface ChineseOrBlank {
-    String message() default "必須為中文或空值";
+    String message() default "必需為中文或空值";
     Class<?>[] groups() default {};
     Class<? extends Payload>[] payload() default {};
 }

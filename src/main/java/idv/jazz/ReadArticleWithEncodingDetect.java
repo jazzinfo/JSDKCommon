@@ -16,6 +16,7 @@ import org.hibernate.validator.messageinterpolation.ParameterMessageInterpolator
 import idv.jazz.dto.News;
 import idv.jazz.service.NewsService;
 import idv.jazz.utility.NewsParser;
+import idv.jazz.utility.PropertyLoader;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.Validation;
 import jakarta.validation.Validator;
@@ -28,7 +29,9 @@ public class ReadArticleWithEncodingDetect {
     private static final Charset BIG5 = Charset.forName("Big5");
 
     public static void main(String[] args) { 
-     	List<Path> myFileList = getSrcFileList("C:\\MyDoc\\Rawdata\\");
+       	PropertyLoader loader = new PropertyLoader("my.properties");
+       	String srcFilePath = loader.get("srcFile.path");
+     	List<Path> myFileList = getSrcFileList(srcFilePath);
      	for(Path item : myFileList) {
      		System.out.println( "讀取:" + item.toFile() );
      		batchInsertJob(item.toFile());
@@ -92,7 +95,7 @@ public class ReadArticleWithEncodingDetect {
                     System.out.println("欄位：" + violation.getPropertyPath() +
                                        "，錯誤：" + violation.getMessage() +
                                        "，值：" + violation.getInvalidValue());
-                    System.out.println( "Title:" + violation.getRootBean().getTitle() );
+                    printOneNews( violation.getRootBean() );
                 }
                 // 可以選擇：拋出例外、中止流程、或略過這筆
                // throw new RuntimeException("資料驗證錯誤");
@@ -206,6 +209,20 @@ public class ReadArticleWithEncodingDetect {
         return false;
     }
 
+    
+    private static void printOneNews(News item) {
+            System.out.println(item.getTitle());
+            System.out.println(item.getAuthor());
+            System.out.println(item.getBaokan());
+            System.out.println(item.getPubdate());
+            System.out.println(item.getBanci() );
+            System.out.println(item.getBanming());
+            System.out.println(item.getJhuanlan());
+            System.out.println(item.getBaodaodi());
+            System.out.println(item.getFtimg());
+            System.out.println("＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝");
+    }
+    
     private static void printNews(List<News> newsList) {
         for (News item : newsList) {
             System.out.println(item.getTitle());
