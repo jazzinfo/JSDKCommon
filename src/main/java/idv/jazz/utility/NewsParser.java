@@ -7,6 +7,7 @@ import java.util.Map;
 
 import idv.jazz.dto.News;
 
+//中華日報檔案分析器
 public class NewsParser {
 
     // 建立 FieldName → News屬性名稱的對應表

@@ -9,6 +9,7 @@ import java.util.List;
 
 import idv.jazz.dto.News;
 
+//讀取檔案範例
 public class NewsArticleParser {
 
     public static List<News> parseArticles(String filePath) throws IOException {
