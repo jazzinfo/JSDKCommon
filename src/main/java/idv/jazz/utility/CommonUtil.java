@@ -1,6 +1,11 @@
-package idv.jazz;
+package idv.jazz.utility;
 
-import java.io.*;
+import java.io.BufferedInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.RandomAccessFile;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -14,32 +19,20 @@ import java.util.stream.Collectors;
 import org.hibernate.validator.messageinterpolation.ParameterMessageInterpolator;
 
 import idv.jazz.dto.News;
-import idv.jazz.service.NewsService;
-import idv.jazz.utility.NewsParser;
-import idv.jazz.utility.PropertyLoader;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.Validation;
 import jakarta.validation.Validator;
 import jakarta.validation.ValidatorFactory;
 
-public class ReadArticleWithEncodingDetect {
+public class CommonUtil {
 
-    private static final String START_MARK = "標    題:";
-    private static final String END_MARK = "-----------------------------------------";
     private static final Charset BIG5 = Charset.forName("Big5");
-
-    public static void main(String[] args) { 
-       	PropertyLoader loader = new PropertyLoader("my.properties");
-       	String srcFilePath = loader.get("srcFile.path");
-     	List<Path> myFileList = getSrcFileList(srcFilePath);
-     	for(Path item : myFileList) {
-     		System.out.println( "讀取:" + item.toFile() );
-     		batchInsertJob(item.toFile());
-     		System.out.println( "=================================" );
-     	}
-    }
     
-    private static List<Path> getSrcFileList(String srcPath){
+	public CommonUtil() {
+		super();
+	}
+	
+    public static List<Path> getSrcFileList(String srcPath){
         Path directoryPath = Paths.get(srcPath);
 
         try {
@@ -57,28 +50,7 @@ public class ReadArticleWithEncodingDetect {
         }
     }
     
-    private static void batchInsertJob(File file) {
-       	NewsService service = new NewsService();
-        try {
-            Charset charset = detectCharset(file);
-            System.out.println("偵測到編碼: " + charset.displayName());
-
-            List<News> newsList = parseNewsFromFile(file, charset);
-            boolean isValid = doValidData( newsList );
-            if( isValid ) {
-                // printNews(newsList);
-                 service.insertBatch(newsList);
-                 System.out.println("批量插入成功！");           	
-            }
-
-        } catch (IOException e) {
-            System.err.println("讀取檔案時發生錯誤: " + e.getMessage());
-            e.printStackTrace();
-        }
-    }    
-
-    
-    private static boolean doValidData(List<News> newsList) {
+    public static boolean doValidData(List<News> newsList) {
         ValidatorFactory factory = Validation
         	    .byDefaultProvider()
         	    .configure()
@@ -105,7 +77,7 @@ public class ReadArticleWithEncodingDetect {
         return true;
     }
 
-    private static Charset detectCharset(File file) throws IOException {
+    public static Charset detectCharset(File file) throws IOException {
         try (RandomAccessFile raf = new RandomAccessFile(file, "r")) {
             byte[] bom = new byte[3];
             raf.read(bom);
@@ -120,7 +92,7 @@ public class ReadArticleWithEncodingDetect {
         return detectUtf8OrBig5(file);
     }
 
-    private static Charset detectUtf8OrBig5(File file) throws IOException {
+    public static Charset detectUtf8OrBig5(File file) throws IOException {
         try (BufferedInputStream bis = new BufferedInputStream(new FileInputStream(file))) {
             bis.mark(1000);
             byte[] sample = new byte[512];
@@ -132,7 +104,7 @@ public class ReadArticleWithEncodingDetect {
         }
     }
 
-    private static List<News> parseNewsFromFile(File file, Charset charset) throws IOException {
+    public static List<News> parseNewsFromFile(File file, String startMark, String endMark, Charset charset) throws IOException {
         List<News> newsList = new ArrayList<>();
 
         try (RandomAccessFile raf = new RandomAccessFile(file, "r")) {
@@ -144,7 +116,7 @@ public class ReadArticleWithEncodingDetect {
             List<String> block = null;
             //int counter=0;
             while ((line = readLineWithCharset(raf, charset)) != null) {
-                if (line.startsWith(START_MARK)) {
+                if (line.startsWith(startMark)) {
                     block = new ArrayList<>();
                     block.add(line);
                     /*
@@ -154,7 +126,7 @@ public class ReadArticleWithEncodingDetect {
                     	  break;
                     }
                     */
-                } else if (line.equals(END_MARK) && block != null) {
+                } else if (line.equals(endMark) && block != null) {
                     block.add(line);
                     newsList.add(NewsParser.parseLinesToDto(block));
                     block = null;
@@ -207,23 +179,23 @@ public class ReadArticleWithEncodingDetect {
             return true;
         }
         return false;
-    }
-
+    }        
     
     private static void printOneNews(News item) {
-            System.out.println(item.getTitle());
-            System.out.println(item.getAuthor());
-            System.out.println(item.getBaokan());
-            System.out.println(item.getPubdate());
-            System.out.println(item.getBanci() );
-            System.out.println(item.getBanming());
-            System.out.println(item.getJhuanlan());
-            System.out.println(item.getBaodaodi());
-            System.out.println(item.getFtimg());
-            System.out.println("＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝");
-    }
+        System.out.println(item.getTitle());
+        System.out.println(item.getAuthor());
+        System.out.println(item.getBaokan());
+        System.out.println(item.getPubdate());
+        System.out.println(item.getBanci() );
+        System.out.println(item.getBanming());
+        System.out.println(item.getJhuanlan());
+        System.out.println(item.getBaodaodi());
+        System.out.println(item.getFtimg());
+        System.out.println("＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝");
+    } 
     
-    private static void printNews(List<News> newsList) {
+    @SuppressWarnings("unused")
+	private static void printNews(List<News> newsList) {
         for (News item : newsList) {
             System.out.println(item.getTitle());
             System.out.println(item.getAuthor());
@@ -239,5 +211,3 @@ public class ReadArticleWithEncodingDetect {
     }
 
 }
-
-
