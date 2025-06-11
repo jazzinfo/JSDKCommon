@@ -104,7 +104,7 @@ public class CommonUtil {
         }
     }
 
-    public static List<News> parseNewsFromFile(File file, String startMark, String endMark, Charset charset) throws IOException {
+    public static List<News> parseNewsFromFile(File file, String startMark, String endMark, Charset charset, String baokan) throws IOException {
         List<News> newsList = new ArrayList<>();
 
         try (RandomAccessFile raf = new RandomAccessFile(file, "r")) {
@@ -128,7 +128,7 @@ public class CommonUtil {
                     */
                 } else if (line.equals(endMark) && block != null) {
                     block.add(line);
-                    newsList.add(NewsParser.parseLinesToDto(block));
+                    parseLinesToDto( newsList, block, baokan);
                     block = null;
                 } else if (block != null) {
                     block.add(line);
@@ -138,7 +138,17 @@ public class CommonUtil {
 
         return newsList;
     }
-
+    
+    private static List<News> parseLinesToDto(List<News> newsList, List<String> block, String baokan) {
+        if( baokan.equals("CDNS")) {
+            newsList.add(NewsParser.parseLinesToDto(block));
+        }else  if( baokan.equals("CNNS")) {
+            newsList.add(CNNEWSParser.parseLinesToDto(block));
+        }        
+        return newsList;
+    }
+    
+    
     private static String readLineWithCharset(RandomAccessFile raf, Charset charset) throws IOException {
         ByteArrayOutputStream buffer = new ByteArrayOutputStream();
 

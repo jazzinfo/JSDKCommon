@@ -26,7 +26,7 @@ public class News {
 	 @Pattern(regexp = "\\d{8}", message = "日期格式必須為 yyyyMMdd")
      private String pubdate;
      
-	 @Size(max=10)
+	 @Size(max=50)
      private String banci;
 	 
 	 @Size(max=100)
