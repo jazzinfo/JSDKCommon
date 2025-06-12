@@ -20,4 +20,3 @@ public class Main {
         System.out.println("批量插入成功！");
     }
 }
-

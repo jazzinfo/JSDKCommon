@@ -8,7 +8,7 @@ public class StartPoint {
 
     public static void main(String[] args) { 
        	doCNNewsJob();
-       	System.out.println("Job End..."); 
+       	System.out.println("Job End...");
     }
     
     public static void doCNNewsJob() {

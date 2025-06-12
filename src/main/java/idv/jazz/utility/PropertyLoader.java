@@ -31,3 +31,4 @@ public class PropertyLoader {
         return Integer.parseInt(properties.getProperty(key));
     }
 }
+

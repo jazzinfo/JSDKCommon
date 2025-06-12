@@ -18,3 +18,4 @@ public class ChineseOrBlankValidator implements ConstraintValidator<ChineseOrBla
     }
 }
 
+

@@ -8,7 +8,6 @@ import java.util.List;
 import idv.jazz.dto.News;
 import idv.jazz.service.NewsService;
 import idv.jazz.utility.CommonUtil;
-import idv.jazz.utility.NewsParser;
 import idv.jazz.utility.PropertyLoader;
 
 public class CDNSNewsReadArticleWithEncodingDetect implements INews {
@@ -28,7 +27,7 @@ public class CDNSNewsReadArticleWithEncodingDetect implements INews {
     }
     
     public void batchInsertJob(File file) {
-       	NewsService service = new NewsService();
+      // 	NewsService service = new NewsService();
         try {
             Charset charset = CommonUtil.detectCharset(file);
             System.out.println("偵測到編碼: " + charset.displayName());

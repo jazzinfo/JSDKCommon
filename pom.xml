@@ -54,8 +54,6 @@
 		    <artifactId>hibernate-validator</artifactId>
 		    <version>7.0.5.Final</version>
 		</dependency>
-
-
         
     </dependencies>
 

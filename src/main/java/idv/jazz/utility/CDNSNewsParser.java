@@ -9,7 +9,7 @@ import idv.jazz.dto.News;
 
 //中華日報檔案分析器
 public class CDNSNewsParser {
-
+ 
     // 建立 FieldName → News屬性名稱的對應表
     private static final Map<String, String> fieldMap = new HashMap<>();
 

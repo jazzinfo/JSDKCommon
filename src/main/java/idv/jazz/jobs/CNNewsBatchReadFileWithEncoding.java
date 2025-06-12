@@ -25,7 +25,7 @@ public class CNNewsBatchReadFileWithEncoding implements INews {
      		System.out.println( "讀取:" + item.toFile() );
      		batchInsertJob(item.toFile());
      		System.out.println( "=================================" );
-     	}		
+     	}	
 	}
 
 	@Override

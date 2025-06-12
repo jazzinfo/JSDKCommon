@@ -19,3 +19,4 @@ public @interface ChineseOrBlank {
     Class<? extends Payload>[] payload() default {};
 }
 
+

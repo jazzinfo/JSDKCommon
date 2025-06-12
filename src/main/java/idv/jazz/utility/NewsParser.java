@@ -49,3 +49,4 @@ public class NewsParser {
         return news;
     }
 }
+

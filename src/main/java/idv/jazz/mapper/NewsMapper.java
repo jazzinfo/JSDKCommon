@@ -7,7 +7,7 @@ import org.apache.ibatis.annotations.Mapper;
 
 @Mapper
 public interface NewsMapper {
-
+ 
     @InsertProvider(type = SqlBuilder.class, method = "buildBatchInsert")
     void batchInsertNews(List<News> newsList);
 

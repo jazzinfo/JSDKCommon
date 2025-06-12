@@ -1,12 +1,8 @@
 package idv.jazz.service;
 
-import org.apache.ibatis.session.SqlSession;
-
 import idv.jazz.dto.News;
-import idv.jazz.mapper.NewsMapper;
 import idv.jazz.utility.MyBatisUtil;
 import java.util.List;
-
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
